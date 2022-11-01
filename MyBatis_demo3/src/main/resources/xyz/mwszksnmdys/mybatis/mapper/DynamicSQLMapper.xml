@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.mwszksnmdys.mybatis.mapper.DynamicSQLMapper">
+    <!--    List<Emp> getEmpByChoose(Emp emp);   -->
+    <select id="getEmpByChoose" resultType="Emp">
+        select * from t_emp
+        <!--chose、when、otherwise，相当于if ... else if ... else
+            when至少要有一个，otherwise至多有一个-->
+        <where>
+            <choose>
+                <when test="empName != null and empName != ''">
+                    emp_name = #{empName}
+                </when>
+                <when test="age != null and age != ''">
+                    age = #{age}
+                </when>
+                <when test="sex != null and sex != ''">
+                    sex = #{sex}
+                </when>
+                <when test="email != null and email != ''">
+                    email = #{email}
+                </when>
+                <otherwise>
+                    did = 1
+                </otherwise>
+            </choose>
+        </where>
+
+    </select>
+    <select id="getEmpByConditionThree" resultType="Emp">
+        select * from t_emp
+        <!--trim:
+        标签中有内容时：
+            prefix|suffix: 在trim标签中内容前面或后面添加指定内容
+            suffixOverrides|prefixOverrides: 在trim标签中内容前面或后面去掉指定内容
+        标签中没有内容时，trim标签没有任何效果-->
+        <trim prefix="where" suffixOverrides="and|or">
+            <!--根据标签中test属性所对应的表达式决定标签中的内容是否需要拼接到SQL中-->
+            <if test="empName != null and empName != ''">
+                emp_name = #{empName} and
+            </if>
+            <if test="age != null and age != ''">
+                age = #{age} or
+            </if>
+            <if test="sex != null and sex != ''">
+                sex = #{sex} and
+            </if>
+            <if test="email != null and email != ''">
+                email = #{email}
+            </if>
+        </trim>
+    </select>
+
+    <select id="getEmpByConditionTwo" resultType="Emp">
+        select * from t_emp
+        <!--当where标签中有内容时，会自动生成where关键字，并将内容前多余的and/or删除，不能去除内容后面的and/or；
+        当where标签没内容时，该标签没有效果，不会生成where关键字-->
+        <where>
+            <!--根据标签中test属性所对应的表达式决定标签中的内容是否需要拼接到SQL中-->
+            <if test="empName != null and empName != ''">
+                emp_name = #{empName}
+            </if>
+            <if test="age != null and age != ''">
+                and age = #{age}
+            </if>
+            <if test="sex != null and sex != ''">
+                and sex = #{sex}
+            </if>
+            <if test="email != null and email != ''">
+                and email = #{email}
+            </if>
+        </where>
+    </select>
+
+    <sql id="empColumns">eid, emp_name, age, sex, email</sql>
+
+    <select id="getEmpByCondition" resultType="Emp">
+        select <include refid="empColumns"/> from t_emp where 1=1
+        <if test="empName != null and empName != ''">
+            emp_name = #{empName}
+        </if>
+        <if test="age != null and age != ''">
+            and age = #{age}
+        </if>
+        <if test="sex != null and sex != ''">
+            and sex = #{sex}
+        </if>
+        <if test="email != null and email != ''">
+            and email = #{email}
+        </if>
+    </select>
+
+    <!--    int batchDeleteByArray(Integer[] edis);-->
+    <delete id="batchDeleteByArray">
+        delete from t_emp where
+        <foreach collection="eids" item="eid" separator="or">
+            eid = #{eid}
+        </foreach>
+        <!--
+         delete from t_emp where eid in
+             <foreach collection="eids" item="eid" separator="," open="(" close=")">
+                 #{eid}
+             </foreach>
+        -->
+    </delete>
+
+    <!--    int batchInsertByArray(List<Emp> emps);-->
+    <insert id="batchInsertByArray">
+        insert into t_emp values
+        <foreach collection="emps" item="emp" separator=",">
+            (null, #{emp.empName}, #{emp.age}, #{emp.sex}, #{emp.email},null)
+        </foreach>
+    </insert>
+</mapper>
